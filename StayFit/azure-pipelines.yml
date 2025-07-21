@@ -1,0 +1,52 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- none
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- script: echo Hello, world!
+  displayName: 'Run a one-line script'
+
+- script: |
+    echo Add other tasks to build, test, and deploy your project.
+    echo $(Agent.BuildDirectory)
+    cd $(Agent.BuildDirectory)
+    ls
+    cd $(Agent.BuildDirectory)/s
+    echo $(Agent.BuildDirectory)/s
+    echo "gmap_api_key=$(gmap_api_key)" > .env
+    ls
+  displayName: 'Run a multi-line script'
+
+- task: Cache@2
+  inputs:
+    key: "android28"
+    restoreKeys: "android28"
+    path: "/usr/local/lib/android/sdk/platforms/android-28"
+  displayName: Cache Android sdk (test)
+
+- task: FlutterInstall@0
+  inputs:
+    mode: 'auto'
+    channel: 'stable'
+    version: 'custom'
+    customVersion: '3.10.0'
+
+- task: FlutterBuild@0
+  inputs:
+    target: 'apk'
+    projectDirectory: '$(Agent.BuildDirectory)/s'
+  env:
+    gmap_api_key: $(gmap_api_key)
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Agent.BuildDirectory)/s/build/app/outputs/flutter-apk/app-release.apk'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
